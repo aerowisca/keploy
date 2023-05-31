@@ -17,6 +17,7 @@ require (
 	github.com/k0kubun/pp/v3 v3.1.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/keploy/go-sdk v0.8.6
+	github.com/maxbrunsfeld/counterfeiter/v6 v6.4.2-0.20220124131630-8b68ea5d5c3b
 	github.com/soheilhy/cmux v0.1.5
 	github.com/vektah/gqlparser/v2 v2.2.0 // v should b4 less or equal 2.2.0
 	github.com/wI2L/jsondiff v0.3.0

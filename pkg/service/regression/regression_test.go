@@ -3,6 +3,7 @@ package regression
 import (
 	"context"
 	"errors"
+	"go.keploy.io/server/pkg/persistence"
 	"net/http"
 	"os"
 	"testing"
@@ -127,7 +128,10 @@ func TestMain(m *testing.M) {
 	testReportPath += "/reports"
 
 	mockFS = mockPlatform.NewMockExportFS(false)
-	testReportFS = mockPlatform.NewTestReportFS(false)
+	//nativeFS := new(persistencefakes.FakeFilesystem)
+	// TODO : Mock the filesystem after dependencies are configured.
+	nativeFS := persistence.NewNativeFilesystem()
+	testReportFS = mockPlatform.NewTestReportFS(nativeFS)
 	analyticsConfig := telemetry.NewTelemetry(nil, false, false, true, nil, logger, "", nil)
 	rSvc = New(nil, nil, testReportFS, analyticsConfig, logger, true, mockFS)
 	m.Run()

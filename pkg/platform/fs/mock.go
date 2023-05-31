@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.keploy.io/server/pkg/persistence"
 	"io"
 	"os"
 	"path/filepath"
@@ -23,6 +24,7 @@ import (
 type mockExport struct {
 	isTestMode bool
 	tests      sync.Map
+	native     persistence.Filesystem
 }
 
 func NewMockExportFS(isTestMode bool) *mockExport {
@@ -32,28 +34,27 @@ func NewMockExportFS(isTestMode bool) *mockExport {
 	}
 }
 
-func (fe *mockExport) Exists(ctx context.Context, path string) bool {
+func (mex *mockExport) Exists(ctx context.Context, path string) bool {
 	if _, err := os.Stat(filepath.Join(path)); err != nil {
 		return false
 	}
 	return true
 }
 
-func (fe *mockExport) ReadAll(ctx context.Context, testCasePath, mockPath, tcsType string) ([]models.TestCase, error) {
+func (mex *mockExport) ReadAll(ctx context.Context, testCasePath, mockPath, tcsType string) ([]models.TestCase, error) {
 	if !pkg.IsValidPath(testCasePath) || !pkg.IsValidPath(mockPath) {
 		return nil, fmt.Errorf("file path should be absolute. got testcase path: %s and mock path: %s", pkg.SanitiseInput(testCasePath), pkg.SanitiseInput(mockPath))
 	}
-	dir, err := os.OpenFile(testCasePath, os.O_RDONLY, os.ModePerm)
+	dir, err := mex.native.OpenFile(testCasePath, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open the directory containing testcases yaml files. path: %s  error: %s", pkg.SanitiseInput(testCasePath), err.Error())
 	}
 
-	var (
-		res = []models.TestCase{}
-	)
+	var res []models.TestCase
 	files, err := dir.ReadDir(0)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read the names of testcases yaml files from path directory. path: %s  error: %s", pkg.SanitiseInput(testCasePath), err.Error())
+		return nil, fmt.Errorf("failed to read the names of testcases yaml files from path directory. "+
+			"path: %s  error: %s", pkg.SanitiseInput(testCasePath), err.Error())
 	}
 	for _, j := range files {
 		if filepath.Ext(j.Name()) != ".yaml" {
@@ -84,19 +85,17 @@ func (fe *mockExport) ReadAll(ctx context.Context, testCasePath, mockPath, tcsTy
 	return res, nil
 }
 
-func (fe *mockExport) Read(ctx context.Context, path, name string, libMode bool) ([]models.Mock, error) {
+func (mex *mockExport) Read(ctx context.Context, path, name string, libMode bool) ([]models.Mock, error) {
 	return read(path, name, libMode)
 }
 
-func (fe *mockExport) Write(ctx context.Context, path string, doc models.Mock) error {
-	if fe.isTestMode {
-		return nil
-	}
-	isFileEmpty, err := CreateMockFile(path, doc.Name)
+func (mex *mockExport) Write(ctx context.Context, path string, doc models.Mock) error {
+	isFileEmpty, err := mex.native.CreateYamlFile(path, doc.Name)
 	if err != nil {
 		return err
 	}
-	file, err := os.OpenFile(filepath.Join(path, doc.Name+".yaml"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
+	file, err := mex.native.OpenFile(filepath.Join(path, doc.Name+".yaml"),
+		os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("failed to open the file. error: %v", err.Error())
 	}
@@ -119,15 +118,16 @@ func (fe *mockExport) Write(ctx context.Context, path string, doc models.Mock) e
 	return nil
 }
 
-func (fe *mockExport) WriteAll(ctx context.Context, path, fileName string, docs []models.Mock) error {
-	if fe.isTestMode {
+func (mex *mockExport) WriteAll(ctx context.Context, path, fileName string, docs []models.Mock) error {
+	if mex.isTestMode {
 		return nil
 	}
-	_, err := CreateMockFile(path, fileName)
+	_, err := mex.native.CreateYamlFile(path, fileName)
 	if err != nil {
 		return err
 	}
-	file, err := os.OpenFile(filepath.Join(path, fileName+".yaml"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
+	file, err := mex.native.OpenFile(filepath.Join(path, fileName+".yaml"),
+		os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("failed to open the file. error: %s", err.Error())
 	}
@@ -154,12 +154,9 @@ func (fe *mockExport) WriteAll(ctx context.Context, path, fileName string, docs 
 }
 
 func toTestCase(tcs []models.Mock, fileName, mockPath string) ([]models.TestCase, error) {
-	res := []models.TestCase{}
+	var res []models.TestCase
 	for _, j := range tcs {
-		var (
-			// spec  = models.HttpSpec{}
-			mocks = []*proto.Mock{}
-		)
+		var mocks []*proto.Mock
 
 		switch j.Kind {
 		case models.HTTP:

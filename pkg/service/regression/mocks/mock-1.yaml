@@ -1,0 +1,9 @@
+version: api.keploy.io/v1beta2
+kind: Generic
+name: mock-1-0
+spec:
+    metadata:
+        operation: find
+    objects:
+        - type: error
+          data: H4sIAAAAAAAA/zI0MgYEAAD//9JjSIgDAAAA

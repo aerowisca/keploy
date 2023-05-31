@@ -478,7 +478,6 @@ func (r *Regression) Test(ctx context.Context, cid, app, runID, id, testCasePath
 			for i := 0; i < len(tc.Mocks); i++ {
 				mockIds = append(mockIds, tc.Mocks[i].Name)
 			}
-			r.testReportFS.Lock()
 			r.testReportFS.SetResult(runID, models.TestResult{
 				Kind:       models.HTTP,
 				Name:       runID,
@@ -509,8 +508,6 @@ func (r *Regression) Test(ctx context.Context, cid, app, runID, id, testCasePath
 				Noise:        tc.Noise,
 				Result:       *res,
 			})
-			r.testReportFS.Lock()
-			defer r.testReportFS.Unlock()
 		} else {
 			err2 := r.saveResult(ctx, t)
 			if err2 != nil {
@@ -556,7 +553,6 @@ func (r *Regression) TestGrpc(ctx context.Context, resp models.GrpcResp, cid, ap
 			for i := 0; i < len(tc.Mocks); i++ {
 				mockIds = append(mockIds, tc.Mocks[i].Name)
 			}
-			r.testReportFS.Lock()
 			r.testReportFS.SetResult(runID, models.TestResult{
 				Kind:         models.GRPC_EXPORT,
 				Name:         runID,
@@ -572,8 +568,6 @@ func (r *Regression) TestGrpc(ctx context.Context, resp models.GrpcResp, cid, ap
 				Noise:        tc.Noise,
 				Result:       *res,
 			})
-			r.testReportFS.Lock()
-			r.testReportFS.Unlock()
 		} else {
 			err2 := r.saveResult(ctx, t)
 			if err2 != nil {
@@ -929,7 +923,7 @@ func (r *Regression) PutTest(ctx context.Context, run models.TestRun, testExport
 			r.tele.MockTestRun(success, failure, ctx)
 		} else {
 			// sending Testrun Telemetry event to Telemetry service.
-			r.tele.Testrun(success, failure,ctx)
+			r.tele.Testrun(success, failure, ctx)
 		}
 
 		pp.Printf("\n <=========================================> \n  TESTRUN SUMMARY. For testrun with id: %s\n"+"\tTotal tests: %s\n"+"\tTotal test passed: %s\n"+"\tTotal test failed: %s\n <=========================================> \n\n", run.ID, total, success, failure)

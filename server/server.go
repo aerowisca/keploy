@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"go.keploy.io/server/pkg/persistence"
 	"math/rand"
 	"net"
 	"net/http"
@@ -117,8 +118,10 @@ func Server(ver string) *chi.Mux {
 	rdb := mgo.NewRun(kmongo.NewCollection(db.Collection(conf.TestRunTable)), kmongo.NewCollection(db.Collection(conf.TestTable)), logger)
 
 	mockFS := mockPlatform.NewMockExportFS(keploy.GetMode() == keploy.MODE_TEST)
-	testReportFS := mockPlatform.NewTestReportFS(keploy.GetMode() == keploy.MODE_TEST)
-	path:=mockPlatform.UserHomeDir(true)
+
+	nativeFS := persistence.NewNativeFilesystem()
+	testReportFS := mockPlatform.NewTestReportFS(nativeFS)
+	path := mockPlatform.UserHomeDir(true)
 	_, err = mockPlatform.CreateMockFile(path, "histCfg")
 	teleFS := mockPlatform.NewTeleFS()
 	mdb := mgo.NewBrowserMockDB(kmongo.NewCollection(db.Collection("test-browser-mocks")), logger)

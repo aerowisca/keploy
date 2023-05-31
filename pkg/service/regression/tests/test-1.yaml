@@ -1,0 +1,21 @@
+version: api.keploy.io/v1beta2
+kind: gRPC
+name: test-1
+spec:
+    metadata: {}
+    grpc_req:
+        body: Lorem Ipsum
+        method: services.Service.Add
+    grpc_resp:
+        body: '{"message":"Failed", "ts":1674553692}'
+        error: nil
+    objects:
+        - type: error
+          data: H4sIAAAAAAAA/wEAAP//AAAAAAAAAAA=
+        - type: error
+          data: ""
+    mocks:
+        - mock-1-0
+    assertions:
+        noise: []
+    created: 1674553692

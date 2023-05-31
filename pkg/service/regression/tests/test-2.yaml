@@ -1,0 +1,30 @@
+version: api.keploy.io/v1beta2
+kind: Http
+name: test-2
+spec:
+    metadata: {}
+    req:
+        method: GET
+        proto_major: 0
+        proto_minor: 0
+        url: /url
+        header: {}
+        body: ""
+        body_type: utf-8
+    resp:
+        status_code: 200
+        header:
+            Pass: "true"
+        body: '{"message": "passed"}'
+        body_type: utf-8
+        status_message: ""
+        proto_major: 0
+        proto_minor: 0
+    objects:
+        - type: error
+          data: H4sIAAAAAAAA/wEAAP//AAAAAAAAAAA=
+    mocks:
+        - mock-2-0
+    assertions:
+        noise: []
+    created: 1674553692

@@ -33,6 +33,4 @@ type TestReportFS interface {
 	Read(ctx context.Context, path, name string) (models.TestReport, error)
 	SetResult(runId string, test models.TestResult)
 	GetResults(runId string) ([]models.TestResult, error)
-	Lock()
-	Unlock()
 }
