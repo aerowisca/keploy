@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"embed"
 	"fmt"
+	"go.keploy.io/server/pkg/proxy/integrations/grpcparser"
 	"io"
 	"io/ioutil"
 	"log"
@@ -680,6 +681,8 @@ func (ps *ProxySet) handleConnection(conn net.Conn, port uint32) {
 	}
 
 	switch {
+	case grpcparser.IsOutgoingGRPC(buffer):
+		grpcparser.ProcessOutgoingGRPC(buffer, conn, dst, ps.hook, ps.logger)
 	case httpparser.IsOutgoingHTTP(buffer):
 		// capture the otutgoing http text messages]
 		// if models.GetMode() == models.MODE_RECORD {

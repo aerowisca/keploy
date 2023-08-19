@@ -127,6 +127,16 @@ func EncodeMock(mock *models.Mock, logger *zap.Logger) (*NetworkTrafficDoc, erro
 			logger.Error(Emoji+"failed to marshal the http input-output as yaml", zap.Error(err))
 			return nil, err
 		}
+	case models.GRPC_EXPORT:
+		gRPCSpec := spec.GrpcSpec{
+			GrpcReq:  *mock.Spec.GRPCReq,
+			GrpcResp: *mock.Spec.GRPCResp,
+		}
+		err := yamlDoc.Spec.Encode(gRPCSpec)
+		if err != nil {
+			logger.Error(Emoji+"failed to marshal gRPC of external call into yaml", zap.Error(err))
+			return nil, err
+		}
 	case models.GENERIC:
 		genericSpec := spec.GenericSpec{
 			Metadata: mock.Spec.Metadata,
